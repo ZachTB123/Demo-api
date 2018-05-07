@@ -14,18 +14,51 @@ apply plugin: 'groovy'
 apply plugin: 'eclipse'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'jacoco'
 
 group = 'com.example'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 sourceCompatibility = 1.8
 
 repositories {
 	mavenCentral()
 }
 
+jacocoTestReport {
+	group = 'Reporting'
+	reports {
+		xml.enabled true
+		csv.enabled false
+		html.destination "${buildDir}/reports/coverage"
+	}
+	afterEvaluate {
+		classDirectories = files(classDirectories.files.collect {
+			fileTree(dir: it, exclude: [
+				'build.gradle',
+				'gradle.properties',
+				'JenkinsFile',
+				'gradle/**',
+				'gradlew**'
+			])
+		})
+	}
+}
 
 dependencies {
 	compile('org.springframework.boot:spring-boot-starter')
-	compile('org.codehaus.groovy:groovy')
+	compile('org.codehaus.groovy:groovy-all:2.4.14')
+	compile('org.springframework.boot:spring-boot-starter-web:2.0.0.RELEASE')
+
 	testCompile('org.springframework.boot:spring-boot-starter-test')
+	testCompile('org.spockframework:spock-core:1.1-groovy-2.4')
 }
+
+jar {
+	archiveName = "demo-api.jar"
+}
+
+bootRun {
+	systemProperties = System.properties
+}
+
+test.finalizedBy(project.tasks.jacocoTestReport)
